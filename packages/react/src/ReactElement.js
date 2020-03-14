@@ -95,7 +95,7 @@ function defineRefPropWarningGetter(props, displayName) {
  * will not work. Instead test $$typeof field against Symbol.for('react.element') to check
  * if something is a React Element.
  *
- * @param {*} type
+ * @param {*} type 当前节点的类型，可以是原生的 DOM 标签字符串，也可以是函数定义组件或者其他类型
  * @param {*} props
  * @param {*} key
  * @param {string|object} ref
@@ -112,6 +112,7 @@ function defineRefPropWarningGetter(props, displayName) {
 const ReactElement = function(type, key, ref, self, source, owner, props) {
   const element = {
     // This tag allows us to uniquely identify this as a React Element
+    // 标志 ReactElement
     $$typeof: REACT_ELEMENT_TYPE,
 
     // Built-in properties that belong on the element
@@ -157,6 +158,7 @@ const ReactElement = function(type, key, ref, self, source, owner, props) {
       value: source,
     });
     if (Object.freeze) {
+      // 冻结一个对象。一个被冻结的对象再也不能被修改；冻结了一个对象则不能向这个对象添加新的属性，不能删除已有属性，不能修改该对象已有属性的可枚举性、可配置性、可写性，以及不能修改已有属性的值。此外，冻结一个对象后该对象的原型也不能被修改。
       Object.freeze(element.props);
       Object.freeze(element);
     }
@@ -314,14 +316,18 @@ export function createElement(type, config, children) {
   let propName;
 
   // Reserved names are extracted
+  // 用于存放 config 中的属性，但是过滤了一些内部受保护的属性名
   const props = {};
 
+  // config 中的 key 和 ref 属性使用变量单独保存
   let key = null;
   let ref = null;
   let self = null;
   let source = null;
 
+  // config 为 null 表示节点没有任何相关属性
   if (config != null) {
+    // key 和 ref 属性单独处理
     if (hasValidRef(config)) {
       ref = config.ref;
     }
@@ -332,6 +338,7 @@ export function createElement(type, config, children) {
     self = config.__self === undefined ? null : config.__self;
     source = config.__source === undefined ? null : config.__source;
     // Remaining properties are added to a new props object
+    // 将过滤以后的所有属性拷贝到 props 对象中存储
     for (propName in config) {
       if (
         hasOwnProperty.call(config, propName) &&
@@ -344,6 +351,8 @@ export function createElement(type, config, children) {
 
   // Children can be more than one argument, and those are transferred onto
   // the newly allocated props object.
+  // 由于子阶段的数量不限，因此从第三个参数开始，判断生育参数的长度
+  // 具有多个子节点则 properties.children 存储为一个数组
   const childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     props.children = children;
@@ -361,6 +370,7 @@ export function createElement(type, config, children) {
   }
 
   // Resolve default props
+  // 如果有设置 defaultProps，则遍历每个属性并将其属性赋值到没有定义值的 props 对象中
   if (type && type.defaultProps) {
     const defaultProps = type.defaultProps;
     for (propName in defaultProps) {

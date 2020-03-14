@@ -16,17 +16,28 @@ if (__DEV__) {
 
 /**
  * Base class helpers for the updating state of a component.
+ * 用于创建类组件的实例
+ * @param props 表示拥有的属性信息
+ * @param context 表示所处的上下文信息
+ * @param updater 表示一个 updater 对象，用于处理后续的更新调度任务
  */
 function Component(props, context, updater) {
   this.props = props;
   this.context = context;
   // If a component has string refs, we will assign a different object later.
+  // 用于存储类组件实例的引用信息
+  // 在 React 中多种引用方式
+  // 1. 字符串方式，如 <input type="text" ref="inputRef" />
+  // 2. 回调函数方式，如 <input type="text" ref={(input) => this.inputRef = input}>
+  // 3. React.createRef(),如 this.inputRef = React.createRef(null)
+  // 4. useRef 方式，如 this.inputRef = useRef(null)
   this.refs = emptyObject;
-  // We initialize the default updater but the real one gets injected by the
-  // renderer.
+  // We initialize the default updater but the real one gets injected by the renderer.
+  // 当state发生变化的时候，需要updater对象去处理后续的更新调度任务
   this.updater = updater || ReactNoopUpdateQueue;
 }
 
+// 为 Component 增加了个原型属性 isReactComponent，
 Component.prototype.isReactComponent = {};
 
 /**
@@ -37,7 +48,7 @@ Component.prototype.isReactComponent = {};
  * accessing `this.state` after calling this method may return the old value.
  *
  * There is no guarantee that calls to `setState` will run synchronously,
- * as they may eventually be batched together.  You can provide an optional
+ * as they may eventually be batched together. You can provide an optional
  * callback that will be executed when the call to setState is actually
  * completed.
  *
@@ -53,6 +64,7 @@ Component.prototype.isReactComponent = {};
  * @param {?function} callback Called after state is updated.
  * @final
  * @protected
+ * 调用 updater 将状态加入到更新队列中，在将来的某个点被执行
  */
 Component.prototype.setState = function(partialState, callback) {
   invariant(
@@ -78,6 +90,7 @@ Component.prototype.setState = function(partialState, callback) {
  * @param {?function} callback Called after update is complete.
  * @final
  * @protected
+ * 用于强制渲染。在状态改变但是没有调用 setState 的情况下可以通过 forceUpdate 进行调用，该函数不会触发 shouldComponentUpdate
  */
 Component.prototype.forceUpdate = function(callback) {
   this.updater.enqueueForceUpdate(this, callback, 'forceUpdate');
@@ -137,6 +150,7 @@ function PureComponent(props, context, updater) {
 const pureComponentPrototype = (PureComponent.prototype = new ComponentDummy());
 pureComponentPrototype.constructor = PureComponent;
 // Avoid an extra prototype jump for these methods.
+// 把所有可枚举属性值从一个或多个源对象复制到目标对象。
 Object.assign(pureComponentPrototype, Component.prototype);
 pureComponentPrototype.isPureReactComponent = true;
 

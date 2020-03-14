@@ -275,6 +275,12 @@ export function hydrate(
   );
 }
 
+/**
+ * 客户端渲染
+ * @param {*} element 表示 ReactElement 对象
+ * @param {*} container 组件挂载的容器
+ * @param {*} callback （可选属性）渲染完成后需要执行的回调函数。
+ */
 export function render(
   element: React$Element<any>,
   container: DOMContainer,
