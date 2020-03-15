@@ -8,19 +8,29 @@
  */
 
 // UpdateQueue is a linked list of prioritized updates.
-//
+// UpdateQueue 是列表。
 // Like fibers, update queues come in pairs: a current queue, which represents
+// 对于 Fibers 来说，更新队列是成队的：现在的队列，代表着
 // the visible state of the screen, and a work-in-progress queue, which can be
+// 现在屏幕上显示的状态； work-in-progress 队列，
 // mutated and processed asynchronously before it is committed — a form of
+// 是可以改变并且在它提交之前异步进行 —— 一种双缓冲的模式。
 // double buffering. If a work-in-progress render is discarded before finishing,
+// 如果一个 work-in-progress 渲染在结束之前被丢弃了，
 // we create a new work-in-progress by cloning the current queue.
-//
+// 我们会进行一个当前队列的拷贝。
 // Both queues share a persistent, singly-linked list structure. To schedule an
+// 两个队列共享一个持久化、单列表结构。
 // update, we append it to the end of both queues. Each queue maintains a
+// 为了能够更新，我们会给 2 个队列都增加内容。每个队列管理一个指向类表中
 // pointer to first update in the persistent list that hasn't been processed.
+// 第一个还没有被执行的更新任务。
 // The work-in-progress pointer always has a position equal to or greater than
+// work-in-progress 指针的位置等于或大于
 // the current queue, since we always work on that one. The current queue's
+// 当前队列，因为我们在 work-in-progress 队列上工作。当前队列的指针
 // pointer is only updated during the commit phase, when we swap in the
+// 尽在提交的时候会被更新，我们更新时只修改 work-in-progress。
 // work-in-progress.
 //
 // For example:
@@ -32,13 +42,19 @@
 //                                          processed more updates than current.
 //
 // The reason we append to both queues is because otherwise we might drop
+// 我们给 2 个队列都添加的原因是
 // updates without ever processing them. For example, if we only add updates to
+// 我们可能没有执行就丢弃更新。例如，我们如果只加入 work-in-progress 队列，
 // the work-in-progress queue, some updates could be lost whenever a work-in
+// 在我们从当前队列复制时一些更新可能在 work-in-progress 的时候丢失。
 // -progress render restarts by cloning from current. Similarly, if we only add
+// 相应的，如果我们只增加到当前的队列，更新就一定会丢失。
 // updates to the current queue, the updates will be lost whenever an already
 // in-progress queue commits and swaps with the current queue. However, by
+// 但是，添加到 2 个队列的时候，我们能够保证更新一定是下一个 work-in-progress 的一部分。
 // adding to both queues, we guarantee that the update will be part of the next
 // work-in-progress. (And because the work-in-progress queue becomes the
+// （work-in-progress 队列会成为当前队列，一旦它提交了，没有被更新 2 次的风险。）
 // current queue once it commits, there's no danger of applying the same
 // update twice.)
 //
@@ -46,15 +62,21 @@
 // --------------
 //
 // Updates are not sorted by priority, but by insertion; new updates are always
+// 更新根据优先级排序，然后插入；
 // appended to the end of the list.
-//
+// 新的更新会插入到列表的尾部。
 // The priority is still important, though. When processing the update queue
+// 优先级很重要。渲染时执行更新队列，只有更新拥有足够的全县才会有结果。
 // during the render phase, only the updates with sufficient priority are
 // included in the result. If we skip an update because it has insufficient
+// 当我们跳过优先级低的更新时，它依然保留在队列中，后续执行。
 // priority, it remains in the queue to be processed later, during a lower
 // priority render. Crucially, all updates subsequent to a skipped update also
+// 很关键的一点，所有被跳过更新的后续更新依然在队列中。
 // remain in the queue *regardless of their priority*. That means high priority
+// 也就是说高优先级的更新有的时候会执行 2 次。
 // updates are sometimes processed twice, at two separate priorities. We also
+// 我们将会保存一个基本的状态跟踪，表示这个状态已经使用。
 // keep track of a base state, that represents the state before the first
 // update in the queue is applied.
 //

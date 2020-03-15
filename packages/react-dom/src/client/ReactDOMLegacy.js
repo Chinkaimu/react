@@ -4,6 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
+ * ReactDOM 初次 render 调用此文件的 legacyCreateRootFromDOMContainer； legacyCreateFromDOMContainer 调用 ReactDOMRoot 的 createLegacyRoot
  * @flow
  */
 
@@ -114,6 +115,7 @@ function shouldHydrateDueToLegacyHeuristic(container) {
   );
 }
 
+// 根据 DOM 容器创建根节点
 function legacyCreateRootFromDOMContainer(
   container: DOMContainer,
   forceHydrate: boolean,
@@ -163,6 +165,14 @@ function legacyCreateRootFromDOMContainer(
   );
 }
 
+/**
+ * 开始构建 FiberRoot 和 RootFiber ，之后开始执行更新任务
+ * @param {*} parentComponent 父组件 null
+ * @param {*} children 根组件 "{"key":null,"ref":null,"props":{},"_owner":null,"_store":{}}"
+ * @param {*} container 容器
+ * @param {*} forceHydrate
+ * @param {*} callback
+ */
 function legacyRenderSubtreeIntoContainer(
   parentComponent: ?React$Component<any, any>,
   children: ReactNodeList,
@@ -177,14 +187,18 @@ function legacyRenderSubtreeIntoContainer(
 
   // TODO: Without `any` type, Flow says "Property cannot be accessed on any
   // member of intersection type." Whyyyyyy.
+  // 在第一次执行的时候，container上是肯定没有_reactRootContainer属性的
+  // 所以第一次执行时，root肯定为undefined
   let root: RootType = (container._reactRootContainer: any);
   let fiberRoot;
   if (!root) {
     // Initial mount
+    // 首次挂载，进入当前流程控制中，container._reactRootContainer 指向一个 ReactSyncRoot 实例
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
       container,
       forceHydrate,
     );
+    // root 表示 ReactSyncRoot 实例
     fiberRoot = root._internalRoot;
     if (typeof callback === 'function') {
       const originalCallback = callback;

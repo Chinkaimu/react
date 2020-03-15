@@ -4,6 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
+ * createLegacyRoot
+ *
  * @flow
  */
 
@@ -41,7 +43,6 @@ import {
   DOCUMENT_NODE,
   DOCUMENT_FRAGMENT_NODE,
 } from '../shared/HTMLNodeType';
-
 import {createContainer, updateContainer} from 'react-reconciler/inline.dom';
 import invariant from 'shared/invariant';
 import {BlockingRoot, ConcurrentRoot, LegacyRoot} from 'shared/ReactRootTags';
@@ -52,9 +53,11 @@ function ReactDOMRoot(container: DOMContainer, options: void | RootOptions) {
 
 function ReactDOMBlockingRoot(
   container: DOMContainer,
+  // LegacyRoot = 0; BlockingRoot = 1; ConcurrentRoot = 2
   tag: RootTag,
   options: void | RootOptions,
 ) {
+  // 添加 _internalRoot
   this._internalRoot = createRootImpl(container, tag, options);
 }
 
@@ -96,6 +99,7 @@ function createRootImpl(
   const hydrate = options != null && options.hydrate === true;
   const hydrationCallbacks =
     (options != null && options.hydrationOptions) || null;
+  //
   const root = createContainer(container, tag, hydrate, hydrationCallbacks);
   markContainerAsRoot(root.current, container);
   if (hydrate && tag !== LegacyRoot) {
@@ -132,6 +136,7 @@ export function createBlockingRoot(
   return new ReactDOMBlockingRoot(container, BlockingRoot, options);
 }
 
+// legacyCreateRootFromDOMContainer 调用此方法创建根节点
 export function createLegacyRoot(
   container: DOMContainer,
   options?: RootOptions,

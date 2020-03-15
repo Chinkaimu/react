@@ -108,6 +108,7 @@ function FiberRootNode(containerInfo, tag, hydrate) {
   this.containerInfo = containerInfo;
   this.pendingChildren = null;
   this.pingCache = null;
+  // NoWork = 0
   this.finishedExpirationTime = NoWork;
   this.finishedWork = null;
   this.timeoutHandle = noTimeout;
@@ -146,6 +147,7 @@ export function createFiberRoot(
 
   // Cyclic construction. This cheats the type system right now because
   // stateNode is any.
+  // 返回的也是 FiberRootNode
   const uninitializedFiber = createHostRootFiber(tag);
   root.current = uninitializedFiber;
   uninitializedFiber.stateNode = root;

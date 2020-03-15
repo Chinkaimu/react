@@ -353,6 +353,7 @@ function FiberNode(
 //    is faster.
 // 5) It should be easy to port this to a C struct and keep a C implementation
 //    compatible.
+// 初次渲染的 WorkTag HostRoot
 const createFiber = function(
   tag: WorkTag,
   pendingProps: mixed,
@@ -594,6 +595,7 @@ export function createHostRootFiber(tag: RootTag): Fiber {
     mode |= ProfileMode;
   }
 
+  // const HostRoot = 3; // Root of a host tree. Could be nested inside another node.
   return createFiber(HostRoot, null, null, mode);
 }
 
